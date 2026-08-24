@@ -1,0 +1,39 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Ansible & SSH
+ansible/*.retry
+*.pem
+*.key
+*.pub
+id_rsa*
+
+# Secrets & Environment Variables
+.env
+.env.*
+secrets.yml
+vault_password
+
+# OS & IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.log
+
+# Docker & Node/Python App (추후 빌드 아티팩트용)
+dist/
+build/
+node_modules/
+__pycache__/
+*.pyc
