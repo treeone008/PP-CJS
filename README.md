@@ -39,33 +39,20 @@ PayGuard는 금융/결제 도메인의 보안 컴플라이언스(전자금융감
 │  └── Enterprise ELK Stack (Security & Audit Logs Analysis)  │
 └─────────────────────────────────────────────────────────────┘
 
-
-📂 Repository Structure (저장소 구조 - 예정)
+📂 Repository Structure
 
 payguard-platform/
 ├── .gitignore
 ├── README.md
 ├── terraform/                # kt cloud 인프라 프로비저닝 (IaC)
-│   ├── modules/
-│   │   ├── network/          # VPC, Subnet, ACL/Security Group
-│   │   └── compute/          # Bastion, K8s Master/Worker VM
-│   ├── environments/
-│   │   └── prod/             # main.tf, variables.tf, outputs.tf
-│   └── README.md
-├── ansible/                  # 서버 환경 설정 자동화
-│   ├── inventories/          # 호스트 IP 정의 (hosts.ini)
-│   ├── playbooks/            # k8s-init.yml, docker-install.yml, vpn-setup.yml
-│   ├── roles/                # 공통 설정 모듈화
-│   └── ansible.cfg
 ├── k8s/                      # 쿠버네티스 매니페스트 및 Helm
-│   ├── apps/                 # PayGuard 결제 앱 (deployment, service, ingress)
-│   ├── cicd/                 # ArgoCD, Jenkins agent 매니페스트
-│   └── monitoring/           # Prometheus, Grafana, Loki Helm values
 ├── pipelines/                # Jenkins 파이프라인 스크립트
-│   └── Jenkinsfile           # Trivy 보안 스캔 + Build + Push + GitOps Sync
 ├── apps/                     # PayGuard 결제 API 소스 코드
-│   └── payment-api/          # Dummy Web/WAS 소스 및 Dockerfile
-├── onpremise/                # 로컬 OpenStack (DB 및 ELK Stack 구성)
-│   ├── db/                   # MySQL/PostgreSQL 초기화 스크립트
-│   └── elk/                  # Logstash 파이프라인, Elasticsearch 설정, docker-compose
-└── docs/                     # 트러블슈팅, 아키텍처 다이어그램 및 ADR(의사결정기록)
+│
+└── infra/                    # 🏗️ 인프라 및 환경 설정 자동화 (기존 onpremise + ansible 통합)
+    ├── secure-zone/          # 🔒 로컬 OpenStack (DB 및 ELK Stack 구성)
+    │   ├── db-init/          # MySQL 초기 스키마 SQL 
+    │   ├── logstash/         # Logstash 파이프라인
+    │   ├── docker-compose.yml# DB & ELK 통합 실행 파일
+    │   └── .env.example      # 보안 환경변수 템플릿
+    └── public-zone/          # 🌐 퍼블릭 환경 설정 (진행 예정)
