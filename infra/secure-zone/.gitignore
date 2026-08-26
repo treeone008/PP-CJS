@@ -1,0 +1,10 @@
+# Secrets
+.env
+
+# Database & Elasticsearch Data Volumes (볼륨 경로가 하위 폴더로 생길 경우 대비)
+mysql_data/
+es_data/
+mysql-keyring/
+
+# 기타 OS 임시 파일
+.DS_Store

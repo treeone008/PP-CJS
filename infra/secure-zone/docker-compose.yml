@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # 1. MySQL 8.0 (결제 데이터베이스 - TDE 볼륨 암호화 적용)
+  mysql:
+    image: mysql:8.0
+    container_name: payguard-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: payguard_db
+      MYSQL_USER: payguard_user
+      MYSQL_PASSWORD: ${DB_USER_PASSWORD}
+    # 추가된 핵심 암호화 설정!
+    command: 
+      - --early-plugin-load=keyring_file.so
+      - --keyring_file_data=/var/lib/mysql-keyring/keyring
+      - --default-table-encryption=ON
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - mysql_keyring:/var/lib/mysql-keyring  # 암호화 키 보관 볼륨
+    restart: unless-stopped
+
+  # 2. Elasticsearch 8.x (검색 및 로그 저장 엔진)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
+    container_name: payguard-es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+
+  # 3. Logstash 8.x (로그 수집기)
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.12.1
+    container_name: payguard-logstash
+    environment:
+      - "LS_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline    
+    ports:
+      - "5044:5044"
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+  # 4. Kibana 8.x (시각화 대시보드)
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.1
+    container_name: payguard-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  mysql_keyring:
+  es_data:
