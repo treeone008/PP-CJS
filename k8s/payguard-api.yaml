@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payguard-api
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payguard-api
+  template:
+    metadata:
+      labels:
+        app: payguard-api
+    spec:
+      containers:
+      - name: payment-api
+        # 향후 Jenkins CI/CD에서 빌드할 실제 이미지 경로로 대체될 예정입니다.
+        image: payguard-repo/payment-api:latest 
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payguard-api-svc
+  namespace: default
+spec:
+  selector:
+    app: payguard-api
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: payguard-api-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api/v1/payment
+        pathType: Prefix
+        backend:
+          service:
+            name: payguard-api-svc
+            port:
+              number: 80
