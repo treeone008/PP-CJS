@@ -1,0 +1,24 @@
+---
+- name: K8s Nginx Ingress Controller 배포
+  hosts: master
+  become: yes
+  environment:
+    KUBECONFIG: /root/.kube/config
+  tasks:
+    - name: 1. Helm 설치 스크립트 다운로드 및 실행
+      shell: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && bash get_helm.sh
+      args:
+        creates: /usr/local/bin/helm
+
+    - name: 2. Nginx Ingress Helm 저장소 추가
+      command: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+
+    - name: 3. Helm 저장소 업데이트
+      command: helm repo update
+
+    - name: 4. Nginx Ingress Controller 배포 (NodePort 30080 고정)
+      command: >
+        helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
+        --namespace ingress-nginx --create-namespace
+        --set controller.service.type=NodePort
+        --set controller.service.nodePorts.http=30080
