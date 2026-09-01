@@ -1,0 +1,36 @@
+---
+- name: K8s Master 노드 초기화 및 Control Plane 구성
+  hosts: master
+  become: yes
+  tasks:
+    - name: 1. kubeadm init 실행 (클러스터 초기화)
+      command: kubeadm init --pod-network-cidr=192.168.0.0/16 --apiserver-advertise-address=172.27.0.7
+      args:
+        creates: /etc/kubernetes/admin.conf
+
+    - name: 2. kubectl 사용을 위한 .kube 디렉토리 생성 (root 계정)
+      file:
+        path: /root/.kube
+        state: directory
+        mode: '0755'
+
+    - name: 3. 마스터 노드 관리자 인증 파일(admin.conf) 복사
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /root/.kube/config
+        remote_src: yes
+        mode: '0600'
+
+    - name: 4. Calico CNI (컨테이너 네트워크 플러그인) 설치
+      command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+
+    - name: 5. 워커 노드 조인(Join)용 토큰 명령어 추출
+      command: kubeadm token create --print-join-command
+      register: join_command
+
+    - name: 6. 추출된 Join 명령어를 베스천 서버에 임시 파일로 저장
+      local_action: 
+        module: copy 
+        content: "{{ join_command.stdout }}" 
+        dest: "/tmp/k8s_join_command.sh"
+        mode: '0777'

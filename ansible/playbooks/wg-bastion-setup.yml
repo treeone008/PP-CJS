@@ -1,0 +1,33 @@
+---
+- name: kt cloud Bastion 노드 WireGuard 설치 및 키 생성
+  hosts: localhost
+  connection: local
+  become: yes
+  tasks:
+    - name: 1. EPEL 및 ELRepo 저장소 추가
+      dnf:
+        name: 
+          - epel-release
+          - elrepo-release
+        state: present
+
+    - name: 2. WireGuard 도구 설치
+      dnf:
+        name: wireguard-tools
+        state: present
+
+    - name: 3. WireGuard 설정 디렉토리 생성
+      file:
+        path: /etc/wireguard
+        state: directory
+        mode: '0700'
+
+    - name: 4. Private Key 생성
+      shell: wg genkey > /etc/wireguard/privatekey
+      args:
+        creates: /etc/wireguard/privatekey
+
+    - name: 5. Public Key 생성
+      shell: wg pubkey < /etc/wireguard/privatekey > /etc/wireguard/publickey
+      args:
+        creates: /etc/wireguard/publickey
