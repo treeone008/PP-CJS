@@ -1,0 +1,90 @@
+---
+- name: PayGuard Kubernetes Cluster 기초 환경 구성
+  hosts: k8s
+  become: yes
+  tasks:
+    - name: 1. Swap 메모리 비활성화 
+      command: swapoff -a
+      ignore_errors: yes
+
+    - name: 1-1. 재부팅 시 Swap 활성화 방지 (/etc/fstab)
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+    - name: 2. 커널 모듈 로드 (br_netfilter)
+      modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: 3. K8s 네트워킹 브릿지 설정 (sysctl)
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        sysctl_set: yes
+      loop:
+        - { name: 'net.bridge.bridge-nf-call-iptables', value: '1' }
+        - { name: 'net.ipv4.ip_forward', value: '1' }
+
+    - name: 3-5. Docker CE 저장소 추가 (containerd 설치용)
+      command: dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+      args:
+        creates: /etc/yum.repos.d/docker-ce.repo
+
+    - name: 4. containerd 설치 (컨테이너 런타임)
+      dnf:
+        name: containerd.io
+        state: present
+        allowerasing: yes
+
+    - name: 5. containerd 기본 설정 파일 생성
+      shell: |
+        mkdir -p /etc/containerd
+        containerd config default > /etc/containerd/config.toml
+      args:
+        creates: /etc/containerd/config.toml
+
+    - name: 5-1. containerd 설정 - SystemdCgroup 적용
+      replace:
+        path: /etc/containerd/config.toml
+        regexp: 'SystemdCgroup = false'
+        replace: 'SystemdCgroup = true'
+
+    - name: 5-2. containerd 설정 - CRI 플러그인 비활성화 해제 (K8s 연동용 트러블슈팅 반영)
+      replace:
+        path: /etc/containerd/config.toml
+        regexp: '^disabled_plugins = \["cri"\]'
+        replace: '#disabled_plugins = ["cri"]'
+
+    - name: 6. containerd 서비스 재시작 및 활성화
+      systemd:
+        name: containerd
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+
+    - name: 7. Kubernetes 공식 저장소 추가 (v1.28)
+      yum_repository:
+        name: kubernetes
+        description: Kubernetes
+        baseurl: https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+        gpgcheck: yes
+        gpgkey: https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+
+    - name: 8. K8s 필수 패키지 및 트러블슈팅(iproute-tc) 도구 설치
+      dnf:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+          - iproute-tc
+        state: present
+        disable_excludes: kubernetes
+
+    - name: 9. kubelet 서비스 활성화
+      systemd:
+        name: kubelet
+        state: started
+        enabled: yes
