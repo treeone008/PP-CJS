@@ -1,3 +1,4 @@
+# Personal Project - Choi Jinseong
 # 🛡️ PayGuard: Hybrid DevSecOps Platform
 
 > **금융권 망분리 규제 준수를 위한 하이브리드 클라우드(kt cloud & OpenStack) 기반 DevSecOps 인프라 구축 프로젝트**
