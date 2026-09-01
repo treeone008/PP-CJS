@@ -50,7 +50,6 @@ AllowedIPs = 10.99.0.2/32, 192.168.1.0/24
 ### 2. On-Premise DB/ELK 노드 (`/etc/wireguard/wg0.conf`)
 역할: 로컬 내부망 관문 (VPN 가상 IP: 10.99.0.2)
 
-```ini
 [Interface]
 Address = 10.99.0.2/24
 ListenPort = 51820
