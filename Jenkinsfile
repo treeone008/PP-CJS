@@ -10,7 +10,7 @@ pipeline {
         stage('Deploy to K8s') {
             steps {
                 // K8s 마스터 노드로 배포 명령을 전송합니다.
-                sh 'kubectl apply -f k8s/k8s-test-app.yml'
+                sh 'kubectl apply -f k8s/payguard-api.yml'
                 
                 // 배포된 파드의 상태를 출력하여 로그로 남깁니다.
                 sh 'kubectl get pods -o wide'
