@@ -1,0 +1,29 @@
+---
+- name: kt cloud Bastion 노드 Jenkins CI/CD 서버 설치
+  hosts: localhost
+  connection: local
+  become: yes
+  tasks:
+    - name: 1. Java 21 (Jenkins 실행 필수 환경) 설치
+      dnf:
+        name: java-21-openjdk-devel
+        state: present
+
+    - name: 2. Jenkins 공식 저장소 키 다운로드
+      shell: rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+    - name: 3. Jenkins 공식 저장소 추가
+      get_url:
+        url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+        dest: /etc/yum.repos.d/jenkins.repo
+
+    - name: 4. Jenkins 패키지 설치
+      dnf:
+        name: jenkins
+        state: present
+
+    - name: 5. Jenkins 서비스 구동 및 재부팅 시 자동 활성화
+      systemd:
+        name: jenkins
+        state: started
+        enabled: yes
