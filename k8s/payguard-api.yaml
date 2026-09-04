@@ -15,13 +15,14 @@ spec:
     spec:
       containers:
       - name: payment-api
-        # 향후 Jenkins CI/CD에서 빌드할 실제 이미지 경로로 대체될 예정입니다.
         image: payguard-repo/payment-api:latest 
         ports:
         - containerPort: 8080
         env:
         - name: SPRING_PROFILES_ACTIVE
           value: "prod"
+      imagePullSecrets:
+      - name: ghcr-secret
 ---
 apiVersion: v1
 kind: Service

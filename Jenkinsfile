@@ -1,19 +1,39 @@
 pipeline {
     agent any
+    // 자주 쓰는 변수들을 묶어둡니다. (BUILD_NUMBER는 Jenkins가 자동 부여하는 빌드 번호입니다)
+    environment {
+        REGISTRY = "ghcr.io/treeone008"
+        IMAGE_NAME = "payguard-api"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+    }
     stages {
         stage('Checkout Code') {
             steps {
-                // 깃허브에서 최신 코드를 당겨옵니다.
                 checkout scm
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                // 1. 코드를 도커 이미지로 구워냅니다.
+                sh 'docker build -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .'
+            }
+        }
+        stage('Docker Push') {
+            steps {
+                // 2. 아까 등록한 Jenkins 크리덴셜(ghcr-login)을 꺼내서 GHCR에 로그인하고 이미지를 업로드합니다.
+                withCredentials([usernamePassword(credentialsId: 'ghcr-login', passwordVariable: 'GHCR_PAT', usernameVariable: 'GHCR_USER')]) {
+                    sh 'echo "${GHCR_PAT}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin'
+                    sh 'docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}'
+                }
             }
         }
         stage('Deploy to K8s') {
             steps {
-                // K8s 마스터 노드로 배포 명령을 전송합니다.
-                sh 'kubectl apply -f k8s/payguard-api.yaml'
+                // 3. K8s yaml 파일 내의 가짜 image 경로를 '이번에 빌드된 진짜 이미지 경로'로 치환(sed)합니다.
+                sh "sed -i 's|image: .*|image: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/payguard-api.yaml"
                 
-                // 배포된 파드의 상태를 출력하여 로그로 남깁니다.
-                sh 'kubectl get pods -o wide'
+                // 4. 클러스터에 배포합니다.
+                sh 'kubectl apply -f k8s/payguard-api.yaml'
             }
         }
     }
