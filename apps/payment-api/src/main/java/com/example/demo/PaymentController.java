@@ -1,4 +1,6 @@
 package com.example.demo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -6,18 +8,23 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/payment")
 public class PaymentController {
+    private static final Logger auditLogger = LoggerFactory.getLogger("AuditLogger");
+
     @Autowired
     private PaymentRepository paymentRepository;
 
     @PostMapping
     public Payment createPayment(@RequestBody Payment payment) {
         payment.setStatus("COMPLETED");
-        return paymentRepository.save(payment); // DB에 Insert
+        Payment saved = paymentRepository.save(payment);
+        // 감사 로그 파일에 기록
+        auditLogger.info("Payment Created: ID={}, Amount={}", saved.getId(), saved.getAmount());
+        return saved;
     }
 
     @GetMapping
     public List<Payment> getPayments() {
-        return paymentRepository.findAll(); // DB에서 Select
+        return paymentRepository.findAll();
     }
 
     @GetMapping("/health")
