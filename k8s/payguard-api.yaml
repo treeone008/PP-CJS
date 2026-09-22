@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: payment-api
-        image: payguard-repo/payment-api:latest 
+        image: ghcr.io/treeone008/payment-api:latest
         ports:
         - containerPort: 8080
         env:
