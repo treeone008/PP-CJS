@@ -40,8 +40,8 @@
 ┌──────────────────────────────▼────────────────────────────────┐
 │ Local On-Premise (OpenStack / 192.168.1.129) - Secure Zone    │
 │                                                               │
-│  ├── Core Database: MySQL 8.0 (TDE keyring_file 암호화 적용)   │
-│  └── Enterprise ELK Stack (Logstash ➔ Elasticsearch ➔ Kibana│
+│  ├── Core Database: MySQL 8.0 (TDE keyring_file 암호화 적용)  │
+│  └── Enterprise ELK Stack (Logstash ➔ Elasticsearch ➔ Kibana │
 │      : payguard-logs-* 결제/보안 감사 로그 실시간 적재·관제)    │
 └───────────────────────────────────────────────────────────────┘
 ```
